@@ -21,6 +21,8 @@ class PotxTestCase extends DrupalWebTestCase {
 
     // Add potx.inc which we test for its functionality.
     include_once(__DIR__ . '/../potx.inc');
+    include_once(__DIR__ . '/../potx.local.inc');
+    potx_local_init();
     // Store empty error message for reuse in multiple cases.
     $this->empty_error = t('Empty string attempted to be localized. Please do not leave test code for localization in your source.');
   }
@@ -216,16 +218,18 @@ class PotxTestCase extends DrupalWebTestCase {
     $this->assertPluralID('Hello star.', 'Hello @count stars.');
 
     $this->assertMsgID('Escaped: @string');
-    $this->assertMsgID('Pass-through: !string');
     $this->assertMsgID('Placeholder: %string');
 
-    $this->assertMsgID('This @node.type is submitted by @author.name, and has a length of: @count. It contains: %node.numbers and @node.bad_text. Lets pass the bad text through: !node.bad_text.');
+    $this->assertMsgID('This @node.type is submitted by @author.name, and has a length of: @count. It contains: %node.numbers and @node.bad_text.');
 
     $this->assertMsgIDContext('I have context.', 'Lolspeak');
     $this->assertNoMsgIDContext('I have no context.', 'zz');
     $this->assertMsgIDContext('I have context and another parameter.', 'Lolspeak');
 
     $this->assertMsgID('A multiline\n    trans block.');
+    $this->assertMsgID('Test string with @extra_filter');
+    $this->assertMsgID('Test string with @multiple_filters');
+    $this->assertMsgID('Test string with %multiple_filters');
   }
 
   /**
@@ -233,7 +237,7 @@ class PotxTestCase extends DrupalWebTestCase {
    */
   public function testDrupal8() {
     // Parse and build the Drupal 8 module file.
-    $filename = __DIR__ . '/potx_test_8.module';
+    $filename = __DIR__ . '/potx_test_8.module.txt';
     $this->parseFile($filename, POTX_API_8);
 
     // Test parsing $this->t calls in D8 code
@@ -259,8 +263,19 @@ class PotxTestCase extends DrupalWebTestCase {
     $this->assertPluralID('1 translation->formatPlural test string', '@count translation->formatPlural test strings');
     $this->assertPluralIDContext('1 translation->formatPlural test string in context', '@count translation->formatPlural test strings in context', 'Test context');
 
+    $this->assertPluralID('1 PluralTranslatableMarkup test string', '@count PluralTranslatableMarkup test strings');
+    $this->assertPluralIDContext('1 PluralTranslatableMarkup test string with context', '@count PluralTranslatableMarkup test strings with context', 'Test context');
+
     $this->assertMsgID('TranslationWrapper string');
     $this->assertMsgIDContext('TranslationWrapper string with context', 'With context');
+
+    $this->assertMsgID('TranslatableMarkup string');
+    $this->assertMsgID('TranslatableMarkup string without context');
+    $this->assertMsgIDContext('TranslatableMarkup string with long array context', 'With context');
+    $this->assertMsgIDContext('TranslatableMarkup string with short array context', 'With context');
+    $this->assertMsgIDContext('TranslatableMarkup string with long array followed by short array context', 'With context');
+    $this->assertMsgIDContext('TranslatableMarkup string with complicated tokens', 'With context');
+    $this->assertMsgIDContext('TranslatableMarkup string with complicated option tokens', 'With context');
 
     $this->assertMsgID('Test translatable string inside an inline template');
     $this->assertMsgID('Another test translatable string inside an inline template');
@@ -383,6 +398,7 @@ class PotxTestCase extends DrupalWebTestCase {
     $this->assertMsgID('Title potx_test_8_a');
     $this->assertMsgID('Description: potx_test_8_a');
     $this->assertMsgID('Title potx_test_8_b');
+    $this->assertNoMsgID('some_callback');
   }
 
   /**
@@ -393,6 +409,7 @@ class PotxTestCase extends DrupalWebTestCase {
     global $_potx_store, $_potx_strings, $_potx_install;
     $_potx_store = $_potx_strings = $_potx_install = array();
     $test_d8_path = __DIR__ . '/drupal8';
+
     $files = _potx_explore_dir($test_d8_path, '*', POTX_API_8, TRUE);
 
     foreach ($files as $file) {
@@ -439,6 +456,8 @@ class PotxTestCase extends DrupalWebTestCase {
     $this->assertMsgID('Typed sequence - Item 2 code');
     $this->assertMsgID('Sequence of sequence - Description 1');
     $this->assertMsgID('Sequence of sequence - Description 2');
+    $this->assertMsgID('BC sequence item 1');
+    $this->assertMsgID('BC sequence item 2');
     $this->assertMsgID('Basic variable (text)');
     $this->assertMsgID('Parent variable (text)');
     $this->assertMsgID('Key variable (text)');
@@ -454,6 +473,11 @@ class PotxTestCase extends DrupalWebTestCase {
     $this->assertNoMsgID('Basic variable (custom)');
     $this->assertNoMsgID('Parent variable (custom)');
     $this->assertNoMsgID('Key variable (custom)');
+
+    $this->assertPluralID('1 place', '@count places');
+    $this->assertPluralID('1 comment', '@count comments', 'Test context');
+
+    $this->assertMsgID('Test boolean based variable');
   }
 
   /**

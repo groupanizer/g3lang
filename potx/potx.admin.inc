@@ -69,6 +69,7 @@ function potx_select_component_form_submit($form, &$form_state) {
   // This could take some time.
   @set_time_limit(0);
   module_load_include('inc', 'potx');
+  module_load_include('inc', 'potx', 'potx.local');
 
   // Silence status messages.
   potx_status('set', POTX_STATUS_MESSAGE);
@@ -90,12 +91,14 @@ function potx_select_component_form_submit($form, &$form_state) {
 
   if (isset($pathinfo['extension'])) {
     // A specific module or theme file was requested (otherwise there should be no extension).
+    potx_local_init($pathinfo['dirname']);
     $files = _potx_explore_dir($pathinfo['dirname'] .'/', $pathinfo['filename']);
     $strip_prefix = 1 + strlen($pathinfo['dirname']);
     $outputname = $pathinfo['filename'];
   }
   // A directory name was requested.
   else {
+    potx_local_init($component);
     $files = _potx_explore_dir($component .'/');
     $strip_prefix = 1 + strlen($component);
     $outputname = $pathinfo['basename'];
